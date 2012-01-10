@@ -1,0 +1,11 @@
+Some playing around with http://mbostock.github.com/d3/
+
+http://mbostock.github.com/d3/tutorial/circle.html
+http://www.janwillemtulp.com/2011/03/20/tutorial-introduction-to-d3/
+http://www.recursion.org/d3-for-mere-mortals/
+
+You can just open the files in a local browser, is tested in Safari.
+football.html is an animation of the result of a football match, point x,y corresponds to a result, like 1-1 draw 
+,the size of the circle is determined by the number of voters. Data is random results with 0<=x<10 and 0<=y<10
+
+football2.html is the same, but then with the real results of a prediction, i think feyenoord-excelsior. Not animated all results are plotted at once.
