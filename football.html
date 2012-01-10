@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>Treemap</title>
+
+    <script type="text/javascript" src="underscore.js"></script>
+	<script type="text/javascript" src="d3.js"></script>
+    <script type="text/javascript" src="d3.layout.js"></script>
+  </head>
+
+
+  <body>
+
+  </body>
+	
+	<script type="text/javascript">
+	    var svg = d3.select("body").append("svg:svg").attr("width", screen.width).attr("height", screen.innerHeight);
+		var data = [];
+	    
+		setInterval(function() {
+			for (i=0;i<100;i++) {
+       			data.push([Math.floor(Math.random()*10), Math.floor(Math.random()*10)])
+        	}
+		}, 1000);
+		
+		
+		function drawResults(data) {
+            var data_map = _.groupBy(data, function(result){ return result });
+			var data_keys = _.keys(data_map);
+			
+			var values = _.values(data_map);
+			var max_score_count = _.max(values, function(_values) { return _values.length });
+			max_score_count = max_score_count.length;
+			color = d3.scale.linear().domain([0,10]).range(["hsl(250, 50%, 50%)", "hsl(350, 100%, 50%)"]).interpolate(d3.interpolateHsl)
+			
+			var circle = svg.selectAll("circle").data(data_keys);
+			circle.transition()
+			.duration(750)
+			.attr("r", function(d) {
+				r = data_map[d].length;
+				return Math.sqrt(10*r)
+			})
+			.style("fill", function(d) {
+				return color(data_map[d].length);
+			})
+			
+			var text = svg.selectAll("text").data(data_keys);
+			text.transition()
+			.duration(750)
+			.attr("dy", ".35em")
+			.attr("dx", -3)
+			.attr("text-anchor", "middle") 
+			.text(function(d) {
+				return data_map[d].length;
+			});
+			
+			var enter = circle.enter().append("svg:circle");
+			enter.style("fill", "steelblue");
+			enter.attr("cy", function(d) {
+				y = 100*d.split(",")[1];
+				return y;
+			});
+	        enter.attr("cx", function(d) {
+	        	x = 100*d.split(",")[0];
+				return String(x);
+	        });
+			enter.attr("r", function(d) {
+				r = data_map[d].length;
+	            return Math.sqrt(10*r)
+	        });
+	
+			text.enter().append("text")
+			.attr("x", function(d) {
+				return 100*d.split(",")[0];
+			})
+			.attr("y", function(d) {
+				return 100*d.split(",")[1];
+			})
+			.attr("dy", ".35em")
+			.attr("dx", -3)
+			.attr("text-anchor", "middle") 
+			.text(function(d) {
+				return data_map[d].length;
+			});
+		}
+		
+		setInterval(function() {
+			drawResults(data);
+		}, 2000);
+				
+	     </script>
+</html>
