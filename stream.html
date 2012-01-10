@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>Stream</title>
+    <script type="text/javascript" src="underscore.js"></script>
+    <script type="text/javascript" src="d3.js"></script>
+    <script type="text/javascript" src="d3.layout.js"></script>
+    <script type="text/javascript" src="d3.time.js"></script>
+  </head>
+
+<body>
+    <div id="streamgraph">
+    </div>
+</body>
+
+<script type="text/javascript">
+
+    var data = {};
+    var hour = 0;
+    var NUMBER_OF_TIMES = 24;
+
+    var competitors = ["koen", "mark", "floris", "boris", "david"];
+    var colors = {koen: "red", mark: "yellow", floris: "blue", boris: "green", david: "pink"};
+
+    var now = new Date().getTime();
+    var yesterday = now - 24*3600*1000;
+
+    _.each(competitors, function(competitor) {
+        var competitor_result = [];
+        for (i=0; i<NUMBER_OF_TIMES; i++) {
+            competitor_result.push({x: new Date(yesterday + i*3600*1000), y: 100 * Math.random()});
+        }
+        data[competitor] = competitor_result;
+    });
+    last_hour = NUMBER_OF_TIMES;
+
+    var dates = _.map(_.values(data)[0], function(element) { return element.x });
+
+    var width = 1400;
+    var height = 525;
+    var padding = 40;
+
+
+
+    setInterval(function() {
+        _.each(competitors, function(competitor) {
+            data[competitor].push({x: new Date(yesterday + last_hour*3600*1000), y: 100 * Math.random()});
+            data[competitor] = _.rest(data[competitor]);
+            last_hour++;
+        });
+
+        var values = _.values(data);
+        var array_with_added_values = _.map(_.range(dates.length), function(_item) { return 0 });
+        _.each(values, function(avalue) {
+            _.each(avalue, function(value, i) { array_with_added_values[i] = array_with_added_values[i] + value.y });
+        });
+        var max_result = _.max(array_with_added_values);
+        var stacked_data = d3.layout.stack().offset("wiggle")(values);
+
+        var x = d3.time.scale().domain([_.first(dates), _.last(dates)]).range([0, width]);
+        var y = d3.scale.linear().domain([0, max_result]).range([0,height]);
+
+        var area = d3.svg.area()
+        .x(function(d) { return x(d.x) + padding })
+        .y0(function(d) { return y(d.y0) + padding })
+        .y1(function(d) { return y(d.y + d.y0) + padding});
+
+
+        d3.selectAll("path").data(stacked_data).transition().duration(2500).attr("d", area);
+    }, 10000);
+
+    function drawData() {
+
+        var values = _.values(data);
+        var array_with_added_values = _.map(_.range(dates.length), function(_item) { return 0 });
+        _.each(values, function(avalue) {
+            _.each(avalue, function(value, i) { array_with_added_values[i] = array_with_added_values[i] + value.y });
+        });
+        var max_result = _.max(array_with_added_values);
+        var stacked_data = d3.layout.stack().offset("wiggle")(values);
+
+        var x = d3.time.scale().domain([_.first(dates), _.last(dates)]).range([0, width]);
+        var y = d3.scale.linear().domain([0, max_result]).range([0,height]);
+
+        var area = d3.svg.area()
+        .x(function(d) { return x(d.x) + padding })
+        .y0(function(d) { return y(d.y0) + padding })
+        .y1(function(d) { return y(d.y + d.y0) + padding});
+
+        var streamgraph = d3.select("#streamgraph").
+        append("svg:svg").
+        attr("width", width + padding * 2).
+        attr("height", height + padding * 2);
+
+         // create a group to hold the axis-related elements
+        var axisGroup = streamgraph.append("svg:g").
+          attr("transform", "translate("+padding+","+padding+")");
+
+        axisGroup.selectAll(".yTicks").
+        data(d3.range(0, max_result, max_result/10)).
+        enter().append("svg:line").
+        attr("x1", -5).
+        // Round and add 0.5 to fix anti-aliasing effects (see above)
+        attr("y1", function(d) { return d3.round(y(d)) + 0.5; }).
+        attr("x2", width+5).
+        attr("y2", function(d) { return d3.round(y(d)) + 0.5; }).
+        attr("stroke", "lightgray").
+        attr("class", "yTicks");
+
+        axisGroup.selectAll(".xTicks").
+        data(dates).
+        enter().append("svg:line").
+        attr("x1", x).
+        attr("y1", -5).
+        attr("x2", x).
+        attr("y2", height+5).
+        attr("stroke", "lightgray").
+        attr("class", "yTicks");
+
+        axisGroup.selectAll("text.xAxisTop").
+        data(dates).
+        enter().append("svg:text").
+        text(function(d, i) { return d.getHours() }).
+        attr("x", x).
+        attr("y", -8).
+        attr("text-anchor", "middle").
+        attr("class", "axis xAxisTop");
+
+        axisGroup.selectAll("text.yAxisLeft").
+        data(d3.range(0, max_result, max_result/10)).
+        enter().
+        append("svg:text").
+        text(function(d) { return Math.floor(d) }).
+        attr("x", -8).
+        attr("y", function(d) { return y(d) }).
+        attr("class", "yAxisLeft").
+        attr("text-anchor", "end");
+
+        streamgraph.selectAll("path").data(stacked_data).enter().append("path")
+            .style("fill", function(d, i) {
+                competitor = competitors[i];
+                return colors[competitor];
+            })
+            .attr("d", area);
+    }
+
+    drawData();
+
+</script>
+
+</html>
